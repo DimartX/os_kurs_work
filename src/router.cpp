@@ -76,8 +76,8 @@ void Router::Connector() {
             std::string init = ask + " init " +
                 std::to_string(push_port) + " " +
                 std::to_string(pull_port) + " " +
-                std::to_string(up_port) + " " +
-                std::to_string(down_port) + " ";
+                std::to_string(down_port) + " " +
+                std::to_string(up_port) + " ";
             send_message(connector, init);
             std::cout << "Permit connection" << std::endl;
             version("version");
@@ -134,20 +134,24 @@ void Router::Handler() {
 void Router::Synchronizer() {
     while (true) {
         std::string request = recieve_message(up_update);
+        //std::cout << "RECIEVED " << request << std::endl;
         std::istringstream is(request);
         std::string number;
         is >> number;
         std::string command;
         is >> command;
         if (command == "get_upd") {
+            //std::cout << "get_upd" << std::endl;
             std::string key;
+            int version = 0;
             for (auto& versions : storages_versions) {
-                if (versions.second == my_version) {
+                if (versions.second > version) {
                     key = versions.first;
-                    break;
+                    version = versions.second;
                 }
             }
             std::string ask_for_update = number + " upload";
+            //std::cout << "will be sent to " << key << " " << ask_for_update << std::endl;
             send_message(down_update[key], ask_for_update);
         }
         else if (command == "updated") {
@@ -185,6 +189,7 @@ void Router::add(const std::string& key, const int& value, std::string request) 
             continue;
         int version;
         is >> version;
+        storages_versions[store.first] = version;
         if (version > my_version) {
             added = true;
             my_version = version;
@@ -214,6 +219,7 @@ void Router::remove(const std::string& key, std::string request) {
             continue;
         int version;
         is >> version;
+        storages_versions[store.first] = version;
         if (version > my_version) {
             removed = true;
             my_version = version;
@@ -231,6 +237,7 @@ void Router::get(const std::string& key, std::string request) {
     std::string msg = std::to_string(my_version) + " " + request;
     
     for (auto& store : backend_push) {
+        //std::cout << store.first << std::endl;
         send_message(store.second, msg);
     }
 
@@ -244,6 +251,7 @@ void Router::get(const std::string& key, std::string request) {
             continue;
         int version;
         is >> version;
+        storages_versions[store.first] = version;
         if (version == my_version) {
             got = true;
             is >> answer;
@@ -275,6 +283,7 @@ std::pair<bool, std::string> Router::version(const std::string& request) {
             continue;
         int version;
         is >> version;
+        storages_versions[store.first] = version;
         if (version == my_version) {
             newest = true;
         }

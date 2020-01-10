@@ -71,11 +71,11 @@ public:
             int push_port;
             int up_port;
             int down_port;
-            is >> pull_port >> push_port >> down_port >> up_port;
+            is >> pull_port >> push_port >> up_port >> down_port;
             store_pull.connect(get_port_name(pull_port));
             store_push.connect(get_port_name(push_port));
-            update_pull.connect(get_port_name(down_port));
-            update_push.connect(get_port_name(up_port));
+            update_pull.connect(get_port_name(up_port));
+            update_push.connect(get_port_name(down_port));
             std::cout << "Succesfully connected" << std::endl;
             return true;
         }
@@ -121,17 +121,17 @@ public:
                 std::string msg = std::to_string(my_version) + " " +
                     std::to_string(store[pr.first]) + " Ok.";
                 send_message(store_push, msg);
-                std::cout << "sent get" << std::endl;
+                //std::cout << "sent get" << std::endl;
             }
             else if (command == "version") {
                 std::string reply = std::to_string(version) + " Ok.";
                 send_message(store_push, reply);
             }
 
-            if (version - my_version > 1) {
+            if (version > my_version) {
+                //std::cout << "PLEASE UPDATE" << std::endl;
                 std::string ask_for_update = my_key + " get_upd";
                 send_message(update_push, ask_for_update);
-                return;
             }
         }
     }
@@ -145,6 +145,7 @@ public:
             std::string command;
             is >> command;
             if (command == "upload") {
+                //std::cout << "UPLOADING" << std::endl;
                 std::string reply = number + 
                     " upload " + std::to_string(my_version) + " ";
                 for (auto& elem : store) {
@@ -154,6 +155,7 @@ public:
                 send_message(update_push, reply);
             }
             else if (command == "download") {
+                //std::cout << "DOWNLOADING" << std::endl;
                 int version;
                 is >> version;
                 my_version = version;
